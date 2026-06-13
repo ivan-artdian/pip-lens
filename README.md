@@ -1,54 +1,104 @@
-# WTMB (Window Thumbnails)
-A GNOME Shell extension that allows the creation of scaled-down window clones for use as Picture-in-Picture (PIP) thumbnails.
+# pip-lens
 
-WTMB is supported by the V-Shell, AATWS and CHC-E extensions which allows you to create window thumbnails using their controls.
+> A GNOME Shell extension for floating Picture-in-Picture overlays — pin any window or drag-select any screen region as a live, always-on-top thumbnail.
+
+**pip-lens** is a fork of [WTMB (Window Thumbnails)](https://github.com/G-dH/window-thumbnails) by [G-dH](https://github.com/G-dH), extended with screen area/region capture — inspired by the Picture-in-Picture feature built into [elementary OS](https://elementary.io)'s [Gala](https://github.com/elementary/gala) window manager, which lets you pin either a window *or* a drag-selected area of the screen as a floating overlay.
+
+---
+
+## What's new in this fork
+
+| Feature | Upstream (WTMB) | pip-lens |
+|---|:---:|:---:|
+| Window clone thumbnail | ✅ | ✅ |
+| **Screen area / region capture** | ❌ | ✅ |
+| Drag to select any screen region | ❌ | ✅ |
+| Floating, always-on-top overlay | ✅ | ✅ |
+| Drag to move thumbnail | ✅ | ✅ |
+| Resize by scrolling | ✅ | ✅ |
+| Minimize window to thumbnail | ✅ | ✅ |
+| Full-size preview on hover | ✅ | ✅ |
+| Custom scale, position, opacity | ✅ | ✅ |
+| Custom keyboard shortcuts | ✅ | ✅ |
+| Multi-monitor support | ✅ | ✅ |
+| GNOME Shell 42–50 | ✅ | ✅ |
+
+The key addition is **screen area capture**: instead of only being able to pin a whole window, you can now drag to select any rectangular region of the screen — a video player, a terminal output, a section of a document — and pin just that region as a live PIP thumbnail. This mirrors how elementary OS's built-in PIP works, where you can either click a window or drag across any part of it.
+
+---
 
 ## Features
-- Supports GNOME Shell 42 - 50
-- Thumbnails support DND to move them anywhere on the screen
-- Minimize windows to thumbnails
-- Optional full size preview on hover
+
+- Pin any **window** as a floating scaled-down clone
+- **Drag-select any screen region** to create a region thumbnail
+- Move thumbnails freely anywhere on screen via drag-and-drop
+- Resize by scrolling the mouse wheel
+- Minimize windows directly to their thumbnail
+- Optional full-size preview on hover
 - Optional hide on hover
-- Custom default scale, position and opacity, animation speed
-- Resizable by scrolling
-- Fully customizable mouse and keyboard control
-- An unlimited number or a single thumbnail
-- Windows can remember position nad size of their thumbnail after the thumbnail was removed so the thumbnail can be restored later
+- Custom default scale, position, opacity, and animation speed
+- Fully customizable mouse and keyboard controls
+- Unlimited thumbnails or limit to a single one
+- Windows remember the position and size of their thumbnail
 - Multi-monitor support
-- Custom keyboard shortcuts
 
-
-[<img alt="" height="100" src="https://raw.githubusercontent.com/andyholmes/gnome-shell-extensions-badge/master/get-it-on-ego.svg?sanitize=true">](https://extensions.gnome.org/extension/6816/)
-
+---
 
 ## Installation
-### Installation from extensions.gnome.org
-The easiest way to install WTMB: go to [extensions.gnome.org](https://extensions.gnome.org/extension/6816/) and toggle the switch. This installation also gives you automatic updates in the future.
 
-### Installation from GitHub repository
-The latest development version
-You may need to install `git`, `make`, `gettext` and `glib2.0` for successful installation.
-Navigate to the directory you want to download the source code and execute following commands in the terminal:
+### From GitHub
+
+You may need to install `git`, `make`, `gettext`, and `glib2.0` first.
 
 #### GNOME 45+
 
-    git clone https://github.com/G-dH/window-thumbnails.git
-    cd window-thumbnails
-    make install
+```bash
+git clone https://github.com/ivan-artdian/pip-lens.git
+cd pip-lens
+make install
+```
 
-#### GNOME 42-44
+#### GNOME 42–44
 
-    git clone https://github.com/G-dH/window-thumbnails.git
-    cd window-thumbnails
-    git checkout gnome-42-44
-    make install
+```bash
+git clone https://github.com/ivan-artdian/pip-lens.git
+cd pip-lens
+git checkout gnome-42-44
+make install
+```
 
 ### Enabling the extension
-After installation you need to enable the extension.
 
-- First restart GNOME Shell (`ALt` + `F2`, `r`, `Enter`, or Log-Out/Log-In if you use Wayland)
-- Now you should see the *WTMB (Window Thumbnails)* extension in the *Extensions* application (reopen the app if needed to load new data), where you can enable it.
+After installation, restart GNOME Shell:
 
-## Buy me a coffee
-If you like my extensions and want to keep me motivated give me some useful feedback, but you can also help me with my coffee expenses:
-[buymeacoffee.com/georgdh](https://buymeacoffee.com/georgdh)
+- **X11:** Press `Alt` + `F2`, type `r`, press `Enter`
+- **Wayland:** Log out and log back in
+
+Then open the **Extensions** app, find *pip-lens*, and enable it.
+
+---
+
+## Usage
+
+**Create a window thumbnail**
+Click the extension icon or use the keyboard shortcut to select a window — it will appear as a floating PIP overlay.
+
+**Create a screen region thumbnail**
+Activate the extension, then drag across any area of the screen to pin just that region as a live thumbnail.
+
+**Move / resize**
+Drag the thumbnail to reposition it. Scroll the mouse wheel over it to resize.
+
+---
+
+## Credits
+
+- [G-dH](https://github.com/G-dH) — original [WTMB (Window Thumbnails)](https://github.com/G-dH/window-thumbnails) extension
+- [donadigo](https://github.com/donadigo) — original [`gala-pip-plugin`](https://github.com/donadigo/gala-pip-plugin), later merged into elementary OS's Gala, which inspired the area capture feature
+- [elementary OS](https://elementary.io) — for building PIP (window + area selection) into their desktop as a first-class feature
+
+---
+
+## License
+
+[GPL-3.0](LICENSE)
