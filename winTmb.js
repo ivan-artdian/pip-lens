@@ -1,10 +1,12 @@
 /**
- * WTMB (Window Thumbnails)
+ * PIP-Lens (fork of WTMB - Window Thumbnails)
  * winTmb.js
  *
- * @author     GdH <G-dH@github.com>
- * @copyright  2024 - 2025
- * @license    GPL-3.0
+ * @author      GdH <G-dH@github.com>
+ * @contributor ivan-artdian <ivan.artdian@mandrill.com.my>
+ * @copyright   2024 - 2025 GdH
+ * @copyright   2026 ivan-artdian
+ * @license     GPL-3.0
  */
 
 'use strict';

@@ -1,10 +1,12 @@
 /**
- * WTMB (Window Thumbnails)
+ * PIP-Lens (fork of WTMB - Window Thumbnails)
  * prefs.js
  *
- * @author     GdH <G-dH@github.com>
- * @copyright  2024
- * @license    GPL-3.0
+ * @author      GdH <G-dH@github.com>
+ * @contributor ivan-artdian <ivan.artdian@mandrill.com.my>
+ * @copyright   2024 GdH
+ * @copyright   2026 ivan-artdian
+ * @license     GPL-3.0
  */
 
 'use strict';
@@ -19,7 +21,7 @@ import * as OptionsFactory from './optionsFactory.js';
 // gettext
 let _;
 
-export default class WTMB extends ExtensionPreferences {
+export default class PipLens extends ExtensionPreferences {
     _getPageList() {
         const itemFactory = new OptionsFactory.ItemFactory();
         const pageList = [
@@ -344,7 +346,7 @@ export default class WTMB extends ExtensionPreferences {
             [_('Toggle Window Preview'), 5],
             [_('Toggle Hide On Hover'), 6],
             [_('Reset Thumbnail Scale'), 7],
-            [_('Open WTMB Preferences'), 8],
+            [_('Open PIP-Lens Preferences'), 8],
         ];
 
         const scrollActionList = [
@@ -543,25 +545,19 @@ export default class WTMB extends ExtensionPreferences {
         optionList.push(itemFactory.getRowWidget(
             _('Homepage'),
             _('Source code and more info about this extension'),
-            itemFactory.newLinkButton('https://github.com/G-dH/window-thumbnails')
+            itemFactory.newLinkButton('https://github.com/ivan-artdian/pip-lens')
         ));
 
         /* optionList.push(itemFactory.getRowWidget(
             _('Changelog'),
             _("See what's changed."),
-            itemFactory.newLinkButton('https://github.com/G-dH/windows-search-provider/blob/main/CHANGELOG.md')
+            itemFactory.newLinkButton('https://github.com/ivan-artdian/pip-lens/blob/main/CHANGELOG.md')
         ));*/
-
-        optionList.push(itemFactory.getRowWidget(
-            _('GNOME Extensions'),
-            _('Rate and comment this extension on the GNOME Extensions site'),
-            itemFactory.newLinkButton('https://extensions.gnome.org/extension/6816/')
-        ));
 
         optionList.push(itemFactory.getRowWidget(
             _('Report a bug or suggest new feature'),
             _('Help me to help you!'),
-            itemFactory.newLinkButton('https://github.com/G-dH/window-thumbnails/issues')
+            itemFactory.newLinkButton('https://github.com/ivan-artdian/pip-lens/issues')
         ));
 
         optionList.push(itemFactory.getRowWidget(

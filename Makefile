@@ -1,8 +1,8 @@
 SHELL := /bin/bash
 
 # Replace these with the name and domain of your extension!
-NAME     := window-thumbnails
-DOMAIN   := G-dH.github.com
+NAME     := pip-lens
+DOMAIN   := ivan-artdian.github.com
 ZIP_NAME := $(NAME)@$(DOMAIN).zip
 
 # Some of the recipes below depend on some of these files.

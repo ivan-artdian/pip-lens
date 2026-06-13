@@ -1,11 +1,13 @@
 /**
- * WTMB (Window Thumbnails)
+ * PIP-Lens (fork of WTMB - Window Thumbnails)
  * extension.js
  *
- * @author     GdH <G-dH@github.com>
- * @copyright  2024
- * @license    GPL-3.0
-  */
+ * @author      GdH <G-dH@github.com>
+ * @contributor ivan-artdian <ivan.artdian@mandrill.com.my>
+ * @copyright   2024 GdH
+ * @copyright   2026 ivan-artdian
+ * @license     GPL-3.0
+ */
 
 'use strict';
 
@@ -19,7 +21,7 @@ import { WinTmb } from './winTmb.js';
 import * as Keybindings from './keybindings.js';
 import * as Util from './util.js';
 
-export default class WTMB extends Extension.Extension {
+export default class PipLens extends Extension.Extension {
     enable() {
         const Me = {};
         Me.extension = this;

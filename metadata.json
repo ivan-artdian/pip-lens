@@ -1,8 +1,8 @@
 {
   "description": "Allows you to create a Picture-in-Picture (PiP) view of any window",
-  "gettext-domain": "window-thumbnails",
-  "settings-schema": "org.gnome.shell.extensions.window-thumbnails",
-  "name": "WTMB (Window Thumbnails)",
+  "gettext-domain": "pip-lens",
+  "settings-schema": "org.gnome.shell.extensions.pip-lens",
+  "name": "PIP-Lens",
   "shell-version": [
     "45",
     "46",
@@ -11,8 +11,7 @@
     "49",
     "50"
   ],
-  "url": "https://github.com/G-dH/window-thumbnails",
-  "donations": {"buymeacoffee": "georgdh"},
-  "uuid": "window-thumbnails@G-dH.github.com",
+  "url": "https://github.com/ivan-artdian/pip-lens",
+  "uuid": "pip-lens@ivan-artdian.github.com",
   "version-name": "50.0"
 }
