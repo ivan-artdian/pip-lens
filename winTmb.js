@@ -86,6 +86,11 @@ export const WinTmb = class {
     }
 
     createThumbnail(metaWin, minimize, skipAnimation) {
+        if (!metaWin && !minimize) {
+            this._showCreationPopup();
+            return null;
+        }
+
         metaWin = metaWin || this._getCurrentWindow();
         if (!metaWin) {
             console.error(`[${Me.metadata.name}] createThumbnail: Missing argument of type Meta.Window`);
@@ -171,6 +176,225 @@ export const WinTmb = class {
         return null;
     }
 
+    _showCreationPopup() {
+        this._dismissCreationPopup();
+
+        const [px, py] = global.get_pointer();
+
+        // Fullscreen backdrop — catches outside clicks to dismiss
+        this._popupBackdrop = new St.Widget({
+            reactive: true,
+            width: global.stage.width,
+            height: global.stage.height,
+            x: 0,
+            y: 0,
+        });
+        this._popupBackdrop.connect('button-press-event', () => {
+            this._dismissCreationPopup();
+            return Clutter.EVENT_STOP;
+        });
+        Main.layoutManager.addChrome(this._popupBackdrop);
+
+        this._creationPopup = new St.BoxLayout({
+            style: 'background: rgba(30,30,30,0.95); border-radius: 8px; padding: 8px 4px; spacing: 4px;',
+            vertical: true,
+            reactive: true,
+        });
+
+        const label = new St.Label({
+            text: _('Create thumbnail from:'),
+            style: 'color: #ccc; font-size: 0.85em; padding: 2px 12px 6px;',
+            x_align: Clutter.ActorAlign.CENTER,
+        });
+        this._creationPopup.add_child(label);
+
+        const btnStyle = 'background: rgba(80,80,80,0.9); border-radius: 6px; padding: 8px 20px; color: white; text-align: left;';
+
+        const windowBtn = new St.Button({ style: btnStyle, label: _('Window'), x_align: Clutter.ActorAlign.FILL });
+        windowBtn.connect('clicked', () => {
+            this._dismissCreationPopup();
+            this._startWindowPicker();
+            return Clutter.EVENT_STOP;
+        });
+        this._creationPopup.add_child(windowBtn);
+
+        const areaBtn = new St.Button({ style: btnStyle, label: _('Area'), x_align: Clutter.ActorAlign.FILL });
+        areaBtn.connect('clicked', () => {
+            this._dismissCreationPopup();
+            this._startAreaSelector();
+            return Clutter.EVENT_STOP;
+        });
+        this._creationPopup.add_child(areaBtn);
+
+        Main.layoutManager.addChrome(this._creationPopup);
+        Main.layoutManager.uiGroup.set_child_above_sibling(this._creationPopup, null);
+
+        // Position near cursor, keep on screen
+        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+            if (!this._creationPopup)
+                return GLib.SOURCE_REMOVE;
+            const pw = this._creationPopup.width;
+            const ph = this._creationPopup.height;
+            const monitor = Main.layoutManager.currentMonitor;
+            let x = px + 10;
+            let y = py + 10;
+            if (x + pw > monitor.x + monitor.width)
+                x = px - pw - 10;
+            if (y + ph > monitor.y + monitor.height)
+                y = py - ph - 10;
+            this._creationPopup.set_position(x, y);
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    _dismissCreationPopup() {
+        if (this._creationPopup) {
+            this._creationPopup.destroy();
+            this._creationPopup = null;
+        }
+        if (this._popupBackdrop) {
+            this._popupBackdrop.destroy();
+            this._popupBackdrop = null;
+        }
+    }
+
+    _startWindowPicker() {
+        this._pickerOverlay = new St.Widget({
+            reactive: true,
+            width: global.stage.width,
+            height: global.stage.height,
+            x: 0,
+            y: 0,
+            style: 'cursor: crosshair;',
+        });
+
+        global.display.set_cursor(Meta.Cursor.CROSSHAIR);
+
+        this._pickerOverlay.connect('button-press-event', (actor, event) => {
+            const [x, y] = event.get_coords();
+            this._cleanupWindowPicker();
+            const metaWin = this._getWindowAtPoint(x, y);
+            if (metaWin)
+                this.createThumbnail(metaWin);
+            return Clutter.EVENT_STOP;
+        });
+
+        this._pickerOverlay.connect('key-press-event', (actor, event) => {
+            if (event.get_key_symbol() === Clutter.KEY_Escape)
+                this._cleanupWindowPicker();
+            return Clutter.EVENT_STOP;
+        });
+
+        Main.layoutManager.addChrome(this._pickerOverlay);
+        this._pickerOverlay.grab_key_focus();
+    }
+
+    _cleanupWindowPicker() {
+        global.display.set_cursor(Meta.Cursor.DEFAULT);
+        if (this._pickerOverlay) {
+            this._pickerOverlay.destroy();
+            this._pickerOverlay = null;
+        }
+    }
+
+    _getWindowAtPoint(x, y) {
+        const windows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, null);
+        for (const w of windows) {
+            if (w.minimized || w.skip_taskbar)
+                continue;
+            const rect = w.get_frame_rect();
+            if (x >= rect.x && x < rect.x + rect.width &&
+                y >= rect.y && y < rect.y + rect.height)
+                return w;
+        }
+        return null;
+    }
+
+    _startAreaSelector() {
+        this._areaOverlay = new St.Widget({
+            reactive: true,
+            width: global.stage.width,
+            height: global.stage.height,
+            x: 0,
+            y: 0,
+            style: 'background: rgba(0,0,0,0.2);',
+        });
+
+        let dragStart = null;
+        let selectionRect = null;
+
+        this._areaOverlay.connect('button-press-event', (actor, event) => {
+            const [x, y] = event.get_coords();
+            dragStart = { x, y };
+            selectionRect = new St.Widget({
+                style: 'border: 2px solid white; background: rgba(255,255,255,0.1);',
+                x, y,
+                width: 0,
+                height: 0,
+            });
+            this._areaOverlay.add_child(selectionRect);
+            return Clutter.EVENT_STOP;
+        });
+
+        this._areaOverlay.connect('motion-event', (actor, event) => {
+            if (!dragStart || !selectionRect)
+                return Clutter.EVENT_PROPAGATE;
+            const [x, y] = event.get_coords();
+            selectionRect.set_position(Math.min(dragStart.x, x), Math.min(dragStart.y, y));
+            selectionRect.set_size(Math.abs(x - dragStart.x), Math.abs(y - dragStart.y));
+            return Clutter.EVENT_STOP;
+        });
+
+        this._areaOverlay.connect('button-release-event', (actor, event) => {
+            if (!dragStart || !selectionRect) {
+                this._cleanupAreaSelector();
+                return Clutter.EVENT_STOP;
+            }
+            const [x, y] = event.get_coords();
+            const rx = Math.min(dragStart.x, x);
+            const ry = Math.min(dragStart.y, y);
+            const rw = Math.abs(x - dragStart.x);
+            const rh = Math.abs(y - dragStart.y);
+            this._cleanupAreaSelector();
+            if (rw >= 20 && rh >= 20)
+                this.createAreaThumbnail({ x: rx, y: ry, width: rw, height: rh });
+            return Clutter.EVENT_STOP;
+        });
+
+        this._areaOverlay.connect('key-press-event', (actor, event) => {
+            if (event.get_key_symbol() === Clutter.KEY_Escape)
+                this._cleanupAreaSelector();
+            return Clutter.EVENT_STOP;
+        });
+
+        Main.layoutManager.addChrome(this._areaOverlay);
+        this._areaOverlay.grab_key_focus();
+    }
+
+    _cleanupAreaSelector() {
+        if (this._areaOverlay) {
+            this._areaOverlay.destroy();
+            this._areaOverlay = null;
+        }
+    }
+
+    createAreaThumbnail(screenRect) {
+        const thumbnail = new AreaThumbnail(screenRect);
+        this._windowThumbnails.push(thumbnail);
+
+        if (opt.DISABLE_UNREDIRECTION && !this._redirectionDisabled)
+            this._disableDisplayRedirection();
+
+        thumbnail.connect('remove', tmb => {
+            this._windowThumbnails.splice(this._windowThumbnails.indexOf(tmb), 1);
+            tmb.destroy();
+            if (this._windowThumbnails.length === 0)
+                this._enableDisplayRedirection();
+        });
+
+        return thumbnail;
+    }
+
     minimizeToThumbnail(metaWin) {
         const minimize = true;
         return this.createThumbnail(metaWin, minimize);
@@ -224,7 +448,7 @@ export const WinTmb = class {
         for (let i = this._windowThumbnails.length - 1; i > -1; i--) {
             const tmb = this._windowThumbnails[i];
             if (!tmb._minimized) {
-                if (!lastTmbGeometry)
+                if (!lastTmbGeometry && tmb._metaWin)
                     lastTmbGeometry = tmb._metaWin._thumbnailGeometry;
                 tmb.remove();
             }
@@ -1329,5 +1553,264 @@ class WindowPreview extends St.Widget {
 
     _onDestroy() {
         this._metaWin = null;
+    }
+});
+
+const AreaThumbnail = GObject.registerClass({
+    Signals: { 'remove': {} },
+}, class AreaThumbnail extends St.Widget {
+    _init(screenRect) {
+        super._init({
+            layout_manager: new Clutter.BinLayout(),
+            visible: true,
+            reactive: true,
+            can_focus: true,
+            track_hover: true,
+            clip_to_allocation: true,
+        });
+
+        this._timeouts = {};
+        this._screenRect = screenRect;
+        this._scrollTime = 0;
+        this._clones = [];
+
+        const monitor = Main.layoutManager.currentMonitor;
+        this._monitor = monitor;
+        this._geometry = new Mtk.Rectangle();
+        this._geometry.monitorIndex = monitor.index;
+
+        // Scale selected area to DEFAULT_SCALE fraction of monitor height
+        this._scale = Math.min(
+            (opt.DEFAULT_SCALE * monitor.height) / screenRect.height,
+            1.0
+        );
+
+        this._applyScale();
+
+        // Center thumbnail on selected area
+        this._geometry.x = Math.round(screenRect.x + screenRect.width / 2 - this._geometry.width / 2);
+        this._geometry.y = Math.round(screenRect.y + screenRect.height / 2 - this._geometry.height / 2);
+        this._fixPosition();
+
+        // DND
+        this._delegate = this;
+        this._draggable = DND.makeDraggable(this, { dragActorOpacity: DRAG_OPACITY });
+        this._draggable.connect('drag-end', this._endDrag.bind(this));
+        this._draggable.connect('drag-cancelled', this._endDrag.bind(this));
+        this._draggable._animateDragEnd = eventTime => {
+            this._draggable._animationInProgress = true;
+            this._draggable._onAnimationComplete(this._draggable._dragActor, eventTime);
+            this.opacity = 255;
+        };
+
+        // Inner container: fixed layout so window clones can be freely positioned
+        this._cloneContainer = new St.Widget({
+            layout_manager: new Clutter.FixedLayout(),
+            clip_to_allocation: true,
+            x_expand: true,
+            y_expand: true,
+            reactive: false,
+        });
+        this.add_child(this._cloneContainer);
+
+        // Track window additions for live updates
+        global.display.connectObject('window-created', () => this._scheduleRebuild(), this);
+
+        this._buildClones();
+
+        if (opt.SHOW_CLOSE_BUTTON)
+            this._addCloseButton();
+
+        Main.layoutManager.addChrome(this);
+        this._setBelowPanel();
+
+        this.connect('button-release-event', this._onBtnReleased.bind(this));
+        this.connect('scroll-event', this._onScrollEvent.bind(this));
+        this.connect('enter-event', () => { if (this._closeButton) this._closeButton.opacity = CLOSE_BTN_OPACITY; });
+        this.connect('leave-event', () => { if (this._closeButton) this._closeButton.opacity = 0; });
+
+        Main.layoutManager.connectObject('monitors-changed', () => this._fixPosition(), this);
+
+        this.set_style('box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.4);');
+        this.opacity = 0;
+        this.ease({
+            opacity: 255,
+            duration: opt.ANIMATION_TIME,
+            mode: Clutter.AnimationMode.EASE_OUT_EXPO,
+        });
+    }
+
+    _buildClones() {
+        // Disconnect actor signals from previous build
+        for (const { actor } of this._clones) {
+            try { actor.disconnectObject(this); } catch (_) {}
+        }
+        this._cloneContainer.remove_all_children();
+        this._clones = [];
+
+        const sr = this._screenRect;
+        const windows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, null);
+        // Reverse: add bottom z-order windows first so topmost renders on top
+        const visible = windows.filter(w => !w.minimized && !w.skip_taskbar).reverse();
+
+        for (const w of visible) {
+            const actor = w.get_compositor_private();
+            if (!actor)
+                continue;
+
+            // Skip windows that don't overlap selected area
+            if (actor.x + actor.width <= sr.x || actor.x >= sr.x + sr.width ||
+                actor.y + actor.height <= sr.y || actor.y >= sr.y + sr.height)
+                continue;
+
+            const clone = new Clutter.Clone({ source: actor, reactive: false });
+            clone.set_scale(this._scale, this._scale);
+            clone.set_position(
+                (actor.x - sr.x) * this._scale,
+                (actor.y - sr.y) * this._scale
+            );
+
+            this._cloneContainer.add_child(clone);
+            this._clones.push({ clone, actor });
+
+            actor.connectObject(
+                'notify::x', () => this._repositionClones(),
+                'notify::y', () => this._repositionClones(),
+                'notify::width', () => this._repositionClones(),
+                'destroy', () => this._scheduleRebuild(),
+                this
+            );
+        }
+    }
+
+    _scheduleRebuild() {
+        if (this._tmbDestroyed || !this._timeouts)
+            return;
+        if (this._timeouts.rebuildId)
+            return;
+        this._timeouts.rebuildId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
+            if (this._timeouts)
+                this._timeouts.rebuildId = 0;
+            if (!this._tmbDestroyed)
+                this._buildClones();
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    _repositionClones() {
+        const sr = this._screenRect;
+        for (const { clone, actor } of this._clones) {
+            clone.set_scale(this._scale, this._scale);
+            clone.set_position(
+                (actor.x - sr.x) * this._scale,
+                (actor.y - sr.y) * this._scale
+            );
+        }
+    }
+
+    _applyScale() {
+        const w = Math.round(this._screenRect.width * this._scale);
+        const h = Math.round(this._screenRect.height * this._scale);
+        this._geometry.width = w;
+        this._geometry.height = h;
+        this.set_size(w, h);
+    }
+
+    _addCloseButton() {
+        const closeButton = new St.Button({
+            opacity: 0,
+            style_class: 'window-close',
+            child: new St.Icon({ icon_name: 'preview-close-symbolic' }),
+            x_align: Clutter.ActorAlign.END,
+            y_align: Clutter.ActorAlign.START,
+            x_expand: true,
+            y_expand: true,
+        });
+        closeButton.translation_x = -8;
+        closeButton.translation_y = 8;
+        closeButton.connect('clicked', () => {
+            this.remove();
+            return Clutter.EVENT_STOP;
+        });
+        this._closeButton = closeButton;
+        this.add_child(this._closeButton);
+    }
+
+    remove() {
+        if (this._tmbDestroyed)
+            return;
+        this._tmbDestroyed = true;
+        this.removeTimeouts();
+        global.display.disconnectObject(this);
+        for (const { actor } of this._clones) {
+            try { actor.disconnectObject(this); } catch (_) {}
+        }
+        this._clones = [];
+        Main.layoutManager.disconnectObject(this);
+        this.emit('remove');
+    }
+
+    removeTimeouts() {
+        if (this._timeouts) {
+            Object.values(this._timeouts).forEach(t => { if (t) GLib.source_remove(t); });
+            this._timeouts = null;
+        }
+    }
+
+    _endDrag() {
+        this._geometry.x = Math.round(this._draggable._dragOffsetX + this._draggable._dragX);
+        this._geometry.y = Math.round(this._draggable._dragOffsetY + this._draggable._dragY);
+        const index = global.display.get_monitor_index_for_rect(this._geometry);
+        this._monitor = Main.layoutManager.monitors[index] || this._monitor;
+        this._geometry.monitorIndex = this._monitor.index;
+        this._fixPosition();
+        this._setBelowPanel();
+        this._applyScale();
+        this._repositionClones();
+    }
+
+    _fixPosition() {
+        const monitor = Main.layoutManager.monitors[this._geometry.monitorIndex] || this._monitor;
+        this._monitor = monitor;
+        const { width, height } = this._geometry;
+        const x = Math.clamp(monitor.x, this._geometry.x, (monitor.x + monitor.width) - width);
+        const y = Math.clamp(monitor.y, this._geometry.y, (monitor.y + monitor.height) - height);
+        this._geometry.x = x;
+        this._geometry.y = y;
+        this.set_position(x, y);
+    }
+
+    _setBelowPanel() {
+        const lm = Main.layoutManager;
+        if (lm.panelBox.get_parent() !== lm.uiGroup)
+            return;
+        lm.uiGroup.set_child_below_sibling(this, lm.panelBox);
+    }
+
+    _onBtnReleased(actor, event) {
+        if (event.get_button() === Clutter.BUTTON_SECONDARY)
+            this.remove();
+        return Clutter.EVENT_STOP;
+    }
+
+    _onScrollEvent(actor, event) {
+        if ((Date.now() - this._scrollTime) < 50)
+            return Clutter.EVENT_STOP;
+        this._scrollTime = Date.now();
+
+        const direction = Me.Util.getScrollDirection(event);
+        if (direction === Clutter.ScrollDirection.UP)
+            this._scale = Math.min(2.0, this._scale + 0.025);
+        else if (direction === Clutter.ScrollDirection.DOWN)
+            this._scale = Math.max(0.05, this._scale - 0.025);
+        else
+            return Clutter.EVENT_PROPAGATE;
+
+        this._applyScale();
+        this._repositionClones();
+        this._fixPosition();
+        Main.layoutManager._queueUpdateRegions();
+
+        return Clutter.EVENT_STOP;
     }
 });
