@@ -1,10 +1,12 @@
 /**
- * WTMB (Window Thumbnails)
+ * PIP-Lens (fork of WTMB - Window Thumbnails)
  * keybindings.js
  *
- * @author     GdH <G-dH@github.com>
- * @copyright  2024
- * @license    GPL-3.0
+ * @author      GdH <G-dH@github.com>
+ * @contributor ivan-artdian <ivan.artdian@mandrill.com.my>
+ * @copyright   2024 GdH
+ * @copyright   2026 ivan-artdian
+ * @license     GPL-3.0
  */
 // This code is based on GSConnect extension
 // https://github.com/GSConnect/gnome-shell-extension-gsconnect/blob/master/src/shell/keybindings.js

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 
 <schemalist>
-  <schema path='/org/gnome/shell/extensions/window-thumbnails/' id='org.gnome.shell.extensions.window-thumbnails'>
+  <schema path='/org/gnome/shell/extensions/pip-lens/' id='org.gnome.shell.extensions.pip-lens'>
     <key name='limit-number' type='i'>
       <default>0</default>
     </key>
